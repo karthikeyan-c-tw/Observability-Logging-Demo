@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-app
+  namespace: message-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-app
+  template:
+    metadata:
+      labels:
+        app: spring-app
+    spec:
+      containers:
+        - name: spring-app
+          image: spring-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 7000
+          volumeMounts:
+            - mountPath: /app/application.properties
+              name: config-volume
+              subPath: application.properties
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 7000
+            initialDelaySeconds: 30
+            periodSeconds: 5
+      volumes:
+        - name: config-volume
+          configMap:
+            name: spring-app-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-app
+  namespace: message-app
+spec:
+  selector:
+    app: spring-app
+  ports:
+    - protocol: TCP
+      port: 7000
+      targetPort: 7000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-app-config
+  namespace: message-app
+data:
+  application.properties: |
+    spring.application.name=example
+    management.endpoints.web.exposure.include=health,info,prometheus,metrics
+    server.port=7000
