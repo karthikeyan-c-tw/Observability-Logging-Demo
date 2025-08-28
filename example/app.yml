@@ -17,12 +17,18 @@ spec:
         - name: spring-app
           image: spring-app:latest
           imagePullPolicy: Never
+          env:
+            - name: LOGGING_CONFIG
+              value: /app/logback-spring.xml
           ports:
             - containerPort: 7000
           volumeMounts:
             - mountPath: /app/application.properties
               name: config-volume
               subPath: application.properties
+            - mountPath: /app/logback-spring.xml
+              name: config-volume
+              subPath: logback-spring.xml
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -57,3 +63,20 @@ data:
     spring.application.name=example
     management.endpoints.web.exposure.include=health,info,prometheus,metrics
     server.port=7000
+    logging.level.root=INFO
+    logging.level.org.springframework.web=ERROR
+
+  logback-spring.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+        <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+            <destination>logstash-service:5000</destination>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+        </appender>
+        <logger name="org.springframework" level="ERROR" />
+  
+        <root level="INFO">
+            <appender-ref ref="LOGSTASH" />
+        </root>
+    </configuration>

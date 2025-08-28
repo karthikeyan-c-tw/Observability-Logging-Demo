@@ -5,6 +5,9 @@ metadata:
   namespace: message-app
 spec:
   schedule: "*/5 * * * *"  # Every 5 minutes
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
       template:
