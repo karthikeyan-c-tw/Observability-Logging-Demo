@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: volume-generator
+  namespace: message-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: volume-generator
+  template:
+    metadata:
+      labels:
+        app: volume-generator
+    spec:
+      containers:
+        - name: volume-generator
+          image: volume-generator:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8501
+          env:
+            - name: MSG_URL
+              value: http://spring-app:7000/message/
+            - name: COUNT
+              value: "1000"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector:4317  # Optional OTLP endpoint for metrics export
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8501
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: volume-generator
+  namespace: message-app
+spec:
+  selector:
+    app: volume-generator
+  ports:
+    - protocol: TCP
+      port: 8501
+      targetPort: 8501
+  type: ClusterIP

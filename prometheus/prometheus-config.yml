@@ -10,12 +10,11 @@ data:
       evaluation_interval: 15s
 
     scrape_configs:
-      - job_name: 'spring-app'
-        metrics_path: /actuator/prometheus
-        static_configs:
-          - targets: ['spring-app:7000']
-
       - job_name: 'kubernetes-apiservers'
+        scheme: https
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
         kubernetes_sd_configs:
           - role: endpoints
         relabel_configs:
@@ -27,6 +26,7 @@ data:
         scheme: https
         tls_config:
           insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
         kubernetes_sd_configs:
           - role: node
         relabel_configs:
@@ -40,9 +40,38 @@ data:
             replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
 
       - job_name: 'coredns'
+        scheme: http
         kubernetes_sd_configs:
           - role: endpoints
         relabel_configs:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: kube-system;coredns;metrics
+      - job_name: 'otel-collector'
+        metrics_path: /metrics
+        static_configs:
+          - targets: ['otel-collector:8889']        
+      - job_name: 'kubernetes-pods'
+        scheme: http
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            separator: ":"
+            regex: (.+);(.+)
+            replacement: $1:$2
+            target_label: __address__
+            action: replace
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name

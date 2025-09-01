@@ -34,10 +34,10 @@ The app also exposes **Prometheus metrics** at: `/actuator/prometheus`
 
 ### 2. 🐍 Volume Generator Job (`volume-generator`)
 
-A lightweight Python script that runs as a Kubernetes **CronJob** every 5 minutes. It:
+A Streamlit Python script that runs as a Kubernetes **Deployment** exposed on port 8501. It:
 
-- Reads the API endpoint from an environment variable `MSG_URL`
-- Sends `COUNT` number of POST requests to the Spring Boot app
+- Accepts a message and a count via a simple web UI
+- On submission, it triggers the url multiple times until count is reached
 - Generates synthetic traffic to demonstrate monitoring in Prometheus
 
 ---
@@ -79,6 +79,9 @@ Scrape interval: `15s`
     ```bash
     #Spring App (if needed):
     kubectl port-forward svc/spring-app 7000:7000 -n message-app
+   
+   #Python Streamlit App:
+    kubectl port-forward svc/volume-generator 8501:8501 -n message-app
     
     #Prometheus:
     kubectl port-forward svc/prometheus 9090:9090 -n message-app

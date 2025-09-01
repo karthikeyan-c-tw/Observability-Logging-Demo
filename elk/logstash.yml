@@ -52,14 +52,35 @@ data:
         codec => json_lines
       }
     }
+    filter {
+      # Ensure `data_stream.dataset` is present in logs
+      if ![data_stream][dataset] {
+      mutate {
+        add_field => { "[data_stream][dataset]" => "unknown-app" }
+        }
+      }
+
+    if ![data_stream][type] {
+      mutate {
+        add_field => { "[data_stream][type]" => "logs" }
+        }
+      }
+
+    if ![data_stream][namespace] {
+      mutate {
+        add_field => { "[data_stream][namespace]" => "default" }
+        }
+      }
+    }
+  
     output {
       elasticsearch {
         hosts => ["http://elasticsearch:9200"]
         data_stream => true
         data_stream_type => "logs"
-        data_stream_dataset => "spring-app"
-        data_stream_namespace => "default"
+        data_stream_dataset => "%{[data_stream][dataset]}"
+        data_stream_namespace => "%{[data_stream][namespace]}"
       }
-      stdout { codec => rubydebug }
-      # You can add elasticsearch or other outputs here later
+    stdout { codec => rubydebug }
+    # You can add elasticsearch or other outputs here later
     }

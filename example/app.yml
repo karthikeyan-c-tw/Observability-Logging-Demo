@@ -65,6 +65,10 @@ data:
     server.port=7000
     logging.level.root=INFO
     logging.level.org.springframework.web=ERROR
+    # Enable OTLP metrics export
+    management.otlp.metrics.export.enabled=true
+    management.otlp.metrics.export.url=http://localhost:4318/v1/metrics
+    management.otlp.metrics.export.step=30s
 
   logback-spring.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
@@ -72,7 +76,9 @@ data:
         <include resource="org/springframework/boot/logging/logback/defaults.xml" />
         <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
             <destination>logstash-service:5000</destination>
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder" >
+                <customFields>{"data_stream":{"type":"logs","dataset":"spring-app","namespace":"default"}}</customFields>
+            </encoder>
         </appender>
         <logger name="org.springframework" level="ERROR" />
   
