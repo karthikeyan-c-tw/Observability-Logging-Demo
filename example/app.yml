@@ -60,14 +60,14 @@ metadata:
   namespace: message-app
 data:
   application.properties: |
-    spring.application.name=example
+    spring.application.name=spring-app
     management.endpoints.web.exposure.include=health,info,prometheus,metrics
     server.port=7000
     logging.level.root=INFO
     logging.level.org.springframework.web=ERROR
     # Enable OTLP metrics export
     management.otlp.metrics.export.enabled=true
-    management.otlp.metrics.export.url=http://localhost:4318/v1/metrics
+    management.otlp.metrics.export.url=http://otel-collector:4318/v1/metrics
     management.otlp.metrics.export.step=30s
 
   logback-spring.xml: |

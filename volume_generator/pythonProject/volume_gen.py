@@ -41,7 +41,8 @@ common_log_data = {
 exporter = OTLPMetricExporter(endpoint=OTLP_COLLECTOR, insecure=True)
 reader = PeriodicExportingMetricReader(exporter)
 provider = MeterProvider(metric_readers=[reader])
-metrics.set_meter_provider(provider)
+if not isinstance(metrics.get_meter_provider(), MeterProvider):
+    metrics.set_meter_provider(provider)
 meter = metrics.get_meter("volume-generator")
 
 # Custom metrics
